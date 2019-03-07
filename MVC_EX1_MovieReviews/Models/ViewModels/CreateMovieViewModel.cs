@@ -12,7 +12,7 @@ namespace MVC_EX1_MovieReviews.Models.ViewModels
         public string Name { get; set; }
 
         [Required]
-        public int Rating { get; set; }
+        public int? Rating { get; set; }
 
         [Required]
         public string Category { get; set; }

@@ -49,16 +49,11 @@
     </div>
     <div class="form-group">
         @Html.LabelFor(Model => Model.Category, "Category:")
-        @Html.DropDownListFor(input => input.Category,
-          new SelectList(
-             new List<Object> {
-                new { value="Drama", text="Drama"},
-                new { value="Comedy", text="Comedy"},
-                new { value="Horror", text="Horror"},
-                new { value="Sci-Fi", text="Sci-Fi"},
-                new { value="Adventure", text="Adventure"},
-
-              }, "Value", "Text"), "- Please Select -", new { @class = "form-control" })
+        @Html.DropDownListFor(Model => Model.Category,
+                        (SelectList)ViewBag.Categories,
+                            "- Please Select -",
+                            new { @class = "form-control" }
+                            )
 
     </div>
     <div class="text-danger">

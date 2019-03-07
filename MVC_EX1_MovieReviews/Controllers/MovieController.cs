@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
+using Microsoft.AspNet.Identity;
+using MVC_EX1_MovieReviews.Models;
 using MVC_EX1_MovieReviews.Models.Domain;
 using MVC_EX1_MovieReviews.Models.ViewModels;
 
@@ -10,22 +12,30 @@ namespace MVC_EX1_MovieReviews.Controllers
 {
     public class MovieController : Controller
     {
-        public static List<Movie> MovieInMemoryDatabase { get; set; }
-           = new List<Movie>();
 
-   
+        private ApplicationDbContext DbContext;
+
+        public MovieController()
+        {
+            DbContext = new ApplicationDbContext();
+        }
+
         public ActionResult Index()
         {
-            var viewModel = MovieInMemoryDatabase.Select(movie => new IndexMovieViewModel
+            var userId = User.Identity.GetUserId();
+
+            var model = DbContext.Movies
+                .Where(p => p.UserId == userId)
+                .Select(p => new IndexMovieViewModel
                 {
-                    Id = movie.Id,
-                    Name = movie.Name,
-                    Rating = movie.Rating,
-                    Category = movie.Category
+                    Id = p.Id,
+                    Name = p.Name,
+                    Rating = p.Rating,
+                    Category = p.Category
 
                 }).ToList();
 
-            return View(viewModel);
+            return View(model);
         }
 
         [HttpGet]
@@ -38,85 +48,123 @@ namespace MVC_EX1_MovieReviews.Controllers
         [HttpPost]
         public ActionResult Create(CreateMovieViewModel inputFormData)
         {
+            return SaveMovie(null, inputFormData);
+        }
+
+        [HttpPost]
+        public ActionResult SaveMovie(int? id, CreateMovieViewModel inputFormData)
+        {
             if (!ModelState.IsValid)
             {
                 PopulateViewBag();
                 return View();
             }
 
-            if (MovieInMemoryDatabase.Any(p => p.Name == inputFormData.Name))
+            var userId = User.Identity.GetUserId();
+
+            
+
+            //if (DbContext.Movies.Any(p => p.UserId == userId &&
+            //      p.Name == inputFormData.Name &&
+            //      (!id.HasValue || p.Id != id.Value)))
+            //{
+            //    ModelState.AddModelError(nameof(CreateMovieViewModel.Name),
+            //        "Movie name should be unique");
+
+            //    PopulateViewBag();
+            //    return View();
+            //}
+
+            Movie movie;
+
+            if (!id.HasValue)
             {
-                ModelState.AddModelError(nameof(CreateMovieViewModel.Name), "Message for error");
+                movie = new Movie();
+                movie.UserId = userId;
+                DbContext.Movies.Add(movie);
+            }
+            else
+            {
+                movie = DbContext.Movies.FirstOrDefault(
+               p => p.Id == id);
+
+                if (movie == null)
+                {
+                    return RedirectToAction(nameof(MovieController.Index));
+                }
             }
 
-            var newMovie = new Movie();
-            Random random = new Random();
-            int randomNumber = random.Next();
-            newMovie.Id = randomNumber;
-            newMovie.Name = inputFormData.Name;
-            newMovie.Rating = inputFormData.Rating;
-            newMovie.Category = inputFormData.Category;
 
+
+            movie.Name = inputFormData.Name;
+            movie.Rating = inputFormData.Rating;
+            movie.Category = inputFormData.Category;
+            
             //Saving to the List
 
-            MovieInMemoryDatabase.Add(newMovie);
+            DbContext.SaveChanges();
 
 
 
-            return Redirect(nameof(MovieController.Index));
+            return RedirectToAction(nameof(MovieController.Index));
         }
 
         [HttpGet]
-        public ActionResult Edit(int id)
+        public ActionResult Edit(int? id)
         {
-            var movie = (from Movie in MovieInMemoryDatabase
-                              where Movie.Id == id
+            if (!id.HasValue)
+            {
+                return RedirectToAction(nameof(MovieController.Index));
+            }
 
-                         select Movie).FirstOrDefault();
+            var userId = User.Identity.GetUserId();
+
+
+            var movie = DbContext.Movies.FirstOrDefault(
+                p => p.Id == id && p.UserId == userId);
+
+
+            if (movie == null)
+            {
+                return RedirectToAction(nameof(MovieController.Index));
+            }
+
 
             PopulateViewBag();
 
-            var model = new IndexMovieViewModel();
-
-            model.Id = movie.Id;
+            var model = new CreateMovieViewModel();
             model.Name = movie.Name;
             model.Rating = movie.Rating;
             model.Category = movie.Category;
 
-
+            
             return View(model);
         }
 
-
         [HttpPost]
-        public ActionResult Edit(IndexMovieViewModel editFormData)
+        public ActionResult Edit(int id, CreateMovieViewModel inputFormData)
         {
-            if (!ModelState.IsValid)
-            {
-                return View();
-            }
-            var movie = (from Movie in MovieInMemoryDatabase
-                         where Movie.Id == editFormData.Id
-                         select Movie).FirstOrDefault();
-
-            movie.Name = editFormData.Name;
-            movie.Rating = editFormData.Rating;
-            movie.Category = editFormData.Category;
-
-           
-
-
-            return RedirectToAction (nameof(MovieController.Index));
+            return SaveMovie(id, inputFormData);
         }
 
 
-        public ActionResult Delete(int id)
+        public ActionResult Delete(int? id)
         {
-            var MovieQuery = (from Movie in MovieInMemoryDatabase
-                              where Movie.Id == id
-                              select Movie).FirstOrDefault();
+            if (!id.HasValue)
+            {
+                return RedirectToAction(nameof(MovieController.Index));
+            }
 
-            MovieInMemoryDatabase.Remove(MovieQuery);
+            var userId = User.Identity.GetUserId();
+
+            var movie = DbContext.Movies.FirstOrDefault(p => p.Id == id && p.UserId == userId);
+
+            if (movie != null)
+            {
+                DbContext.Movies.Remove(movie);
+                DbContext.SaveChanges();
+            }
+
 
             return RedirectToAction(nameof(MovieController.Index));
         }
