@@ -1,0 +1,69 @@
+﻿
+@model CreateMovieViewModel
+
+@{
+    ViewBag.Title = "Create";
+}
+
+@section scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+}
+
+<h2>Movie Review Create</h2>
+
+
+<form method="post">
+
+    <div class="form-group">
+        @Html.LabelFor(Model => Model.Name, "Movie Name :")
+        @Html.TextBoxFor(input => input.Name, new { @class = "form-control", placeholder = "Movie Name" })
+        <div class="text-danger">
+            @Html.ValidationMessageFor(input => input.Name)
+        </div>
+
+    </div>
+    <div class="form-group">
+        @Html.LabelFor(Model => Model.Rating, "Raing:")
+        <div>
+            <label class="radio-inline">
+                @Html.RadioButtonFor(input => input.Rating, 1) 1
+            </label>
+            <label class="radio-inline">
+                @Html.RadioButtonFor(input => input.Rating, 2) 2
+            </label>
+            <label class="radio-inline">
+                @Html.RadioButtonFor(input => input.Rating, 3) 3
+            </label>
+            <label class="radio-inline">
+                @Html.RadioButtonFor(input => input.Rating, 4) 4
+            </label>
+            <label class="radio-inline">
+                @Html.RadioButtonFor(input => input.Rating, 5) 5
+            </label>
+
+        </div>
+        <div class="text-danger">
+            @Html.ValidationMessageFor(input => input.Rating)
+        </div>
+
+    </div>
+    <div class="form-group">
+        @Html.LabelFor(Model => Model.Category, "Category:")
+        @Html.DropDownListFor(input => input.Category,
+          new SelectList(
+             new List<Object> {
+                new { value="Drama", text="Drama"},
+                new { value="Comedy", text="Comedy"},
+                new { value="Horror", text="Horror"},
+                new { value="Sci-Fi", text="Sci-Fi"},
+                new { value="Adventure", text="Adventure"},
+
+              }, "Value", "Text"), "- Please Select -", new { @class = "form-control" })
+
+    </div>
+    <div class="text-danger">
+        @Html.ValidationMessageFor(input => input.Category)
+    </div>
+
+    <button type="submit" class="btn btn-default">Submit</button>
+</form>
